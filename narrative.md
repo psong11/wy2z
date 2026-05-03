@@ -236,3 +236,92 @@ But this morning there was no system. Tonight there is a system that produced a 
 | Supabase rows written | 1 |
 | Public photo URLs | 1 |
 | Days until departure | 8 |
+
+---
+
+## May 3, 2026 (evening) — Twice a Day, Forever
+
+I came back to the project after dinner. The system had a spine. It needed a loop.
+
+The spine was what I'd built that morning — one photo, one Claude verdict, one Supabase row, all triggered by hand. A demo. The loop is what makes the system survive May 11 without me: the same flow, kicked off by cron, twice a day, every day, until I tell it to stop.
+
+In between the spine and the loop I had to build five things — an ESP32 watering controller, the Pi → Jetson SSH bridge, the DHT11 air sensor, the OLED display, and the orchestrator that strings it all together. I'd budgeted eight days for the whole list. It took one evening.
+
+---
+
+I started with the ESP32 because watering felt like the highest-risk piece. If the actuator can't actually move water, no amount of camera and Claude work matters.
+
+I had an SG90 servo, an ESP32 DevKit, a breadboard, and a plan: flash MicroPython, write a tiny HTTP server with a `POST /water` endpoint, mount the servo against the Brita lever, calibrate angle and dwell, done.
+
+Wiring took five minutes. Flashing MicroPython 1.28.0 took three — the firmware came down as a 1.7 MB blob, `esptool` wrote it to `0x1000`, and the chip — an ESP32-D0WD-V3 at MAC `28:05:a5:30:9a:b8` — came up on the REPL announcing itself by version. Writing the firmware took fifteen: `machine.PWM(Pin(13), freq=50)` for the servo, `network.WLAN(STA_IF)` for Wi-Fi, a hand-rolled HTTP parser doing exactly one thing, all of it under 200 lines. The board pulled DHCP and got `192.168.0.28` on the home network. `curl -X POST` returned `{"status":"ok","duration_ms":5000}` in 5.1 seconds. The signal was real. Now to make the signal do work.
+
+Then I started calibrating angles. REST at 10°. Press at 45°. Not enough travel. 80°. Still not enough. 140°. 160°. A nominal "200°" — pulse-width pushing past spec, knowing the cheap clone under-rotates anyway. The horn rotated. The Brita lever, made for a human thumb, did not move. SG90 stall torque is 1.8 kg-cm. Whatever the spring constant of the Brita's dispense lever actually is, it was bigger.
+
+I sketched a fallback. Instead of pressing the lever, what if the servo pinched the tube downstream? Or pressed a small plug against the open end of the tube? The math on the plug worked out cleanly — head pressure from a full Brita over a 1/4" tube is about 10 grams of force, well inside the SG90's torque budget. But the vinyl tube I'd plumbed in is a stiff grade; I tried pinching it shut by hand and couldn't. Plug-on-tube-end was sketchable but not buildable in the next two minutes from what was on the desk.
+
+So I tabled it. A 5V DC water pump is arriving Tuesday. Same firmware scaffold, same `POST /water` endpoint, just swap the PWM call for a GPIO line into a transistor that switches the pump's 5V power. The servo work isn't wasted — the Wi-Fi, the HTTP, the parser, the structure of `water_pulse()`, all of it stays. Only the actuator changes shape.
+
+I wrote the dead-end up in `what_id_change_next_time.md` and committed everything. There's a moment when you realize the cleanest thing to do with a failed approach is leave a clear record of *why* it failed — so future-me doesn't sit down on some Tuesday and decide the SG90 must've just been miswired the first time and try the whole thing again.
+
+---
+
+With watering tabled until the pump arrives, I moved to the sensors.
+
+The Pi → Jetson SSH bridge had to come first. I'd set up Mac → Jetson keys last month, but the Pi couldn't SCP photos off the Jetson yet, which blocked the orchestrator. I generated an ed25519 keypair on the Pi, copied the public key onto the Jetson via the Mac (which already had Jetson auth, so the Jetson's password never had to surface), pre-seeded the Jetson's host key into the Pi's `known_hosts` so the first connection wouldn't sit on a "trust this host?" prompt, and tested with `BatchMode=yes` so a silent password fallback couldn't fool me. `PI_TO_JETSON_OK` came back. Five minutes, no surprises.
+
+Then DHT11. I have never had this much trouble with a $3 sensor.
+
+The wiring was textbook — 3V3 to VCC, DATA to GPIO 4 (Pi header pin 7), GND to GND. The library installed cleanly. Every read returned `DHT sensor not found, check wiring`. I checked the wiring. I rewired the wiring. I checked the GPIO chip — `gpiochip0`, 54 lines, GPIO 17 alive — and then checked `/boot/firmware/config.txt` and saw it. Raspberry Pi OS ships `dtoverlay=w1-gpio` enabled by default, which claims GPIO 4 for the 1-Wire kernel driver. The kernel had the pin. My Python couldn't have it.
+
+I moved the DATA jumper one slot over to header pin 11 (GPIO 17), reran the test, and got 22.6 °C / 56% humidity. The number for a Sunday evening in my apartment in early May. A real reading from a real piece of glass and stamped sheet metal sitting twelve inches from a tomato.
+
+Lesson cached: before assuming any "default" GPIO is free on a Pi, check the overlays.
+
+The OLED was the first thing all evening that worked first try.
+
+GME12864-11, SSD1306 controller, I2C-1 at `0x3C`. Seventy lines of Python using `adafruit-circuitpython-ssd1306` for the panel and Pillow for the text rendering. Four rows of 16-pixel DejaVuSans: date and time, temp and humidity, two rows for status. `i2cdetect` lit up the moment all four wires were seated. The first frame rendered exactly as drawn.
+
+The OLED's job is bigger than a status line: it sits *inside the camera frame*. When the orchestrator pushes `capturing...` to the OLED before triggering the Jetson, the photo that comes back has the date, time, temperature, and humidity baked into the image itself, in pixels, where any future viewer — Claude included — can read them without trusting any file metadata. The image carries its own timestamp. Self-attesting metadata, eight dollars of glass.
+
+---
+
+Stitching it together was the moment I'd been building toward all evening.
+
+`pi5/capture.py` is the orchestrator. One function, `run_capture(mode)`, that does: read DHT, push to OLED, SSH to Jetson, run the capture script, SCP the JPEG back, upload to Supabase, hand the file to Claude, write the observation row, push the verdict back to the OLED, clean up. Two thin wrappers — `morning_capture.py` and `evening_capture.py` — exist only so cron has stable filenames to point at. The mode label lands in the observation row's `notes` column, so I can filter morning shots from evening ones later.
+
+I ran it once. End-to-end took 28 seconds. Observation `7c27e7f9-ff76-424a-a2b9-e5930a17c82b` landed in production.
+
+Claude said zinnia_a was healthy, zinnia_b had some early yellowing worth watching, and the tomato was holding steady but still the big-pot-small-plant problem from this morning. Same plants. Different photo, hours later, slightly different light. The verdict was consistent. The system was reading the world and reporting back, and the report made sense.
+
+---
+
+The cron lines went in last. Two of them:
+
+```
+30 7  * * * /home/paul/wy2z/.venv/bin/python /home/paul/wy2z/pi5/morning_capture.py >> /home/paul/wy2z/cron.log 2>&1
+30 19 * * * /home/paul/wy2z/.venv/bin/python /home/paul/wy2z/pi5/evening_capture.py >> /home/paul/wy2z/cron.log 2>&1
+```
+
+The next firing is 19:30 tonight. Then 07:30 tomorrow. Then 19:30 again. Twice a day, forever, until I run `crontab -e` and delete two lines.
+
+That's the moment that hits hardest. Not the calibration, not the orchestration, not the API call to Claude — the cron line. Because the cron line is the moment the system stops needing me. It doesn't care if I'm asleep, if I'm in California, if the Mac is closed, if I forget. Twice a day, the Pi is going to wake up, ask the Jetson to take a picture of three plants under a light, ask Claude what it thinks, write the row, update a tiny screen, and go back to sleep.
+
+I haven't left for Gilroy yet. The plants haven't been watered by a machine yet. The dashboard doesn't exist. The pump doesn't ship until Tuesday. But the loop is closed, and the loop is where the survival is going to happen.
+
+---
+
+| What | Value |
+|------|-------|
+| Pivots executed | 1 (servo → pump) |
+| Pivots documented | 1 |
+| MicroPython versions flashed | 1 (1.28.0) |
+| Servo angles attempted | 5 (45°, 80°, 140°, 160°, "200°") |
+| Servo torque vs. Brita lever spring | servo lost |
+| GPIO conflicts learned about | 1 (`w1-gpio` overlay on GPIO 4) |
+| Sensor reads on real hardware | DHT 22.6°C / 56%, OLED 0x3C |
+| Files written or refactored | 7 (`main.py`, `capture.py`, `dht.py`, `oled.py`, `analyze.py` refactor, two cron wrappers) |
+| End-to-end orchestrator runtime | 28 seconds |
+| Cron jobs installed | 2 |
+| Times the system will run itself before I'm back | ~70 |
+| Commits today | 5 |
+| Days until departure | 8 |

@@ -19,6 +19,23 @@ The system has to keep three plants alive across that window with zero human int
 | 7 | May 9 | **Failure injection** — kill Wi-Fi, power-cycle Pi mid-water, drain Brita, confirm no plant-killing failure modes |
 | 8 | May 10 | Buffer — fix whatever broke, final pre-flight checks, close laptop, leave |
 
+## Progress (2026-05-03 late evening)
+
+The schedule above was the original budget. Actual progress is ~3 days ahead.
+
+| Day | Goal | Status |
+|---|---|---|
+| 1 | Spine: Jetson → Claude → Supabase | ✅ done morning of May 3 |
+| 4 | Storage upload, public URLs in rows | ✅ done same morning (collapsed into Day 1) |
+| 3 | DHT11 + OLED | ✅ done evening of May 3 (DHT on GPIO 17 — `w1-gpio` overlay claims GPIO 4) |
+| 6 | Cron schedule active | ✅ done evening of May 3 — `morning_capture.py` 07:30, `evening_capture.py` 19:30 |
+| 2 | Watering loop | 🟡 firmware scaffold on the ESP32 (Wi-Fi + HTTP `POST /water`); SG90-on-Brita-lever ruled out (torque); 5V DC pump arriving 2026-05-05 |
+| 5 | Vercel dashboard | ⬜ not started |
+| 7 | Failure injection | ⬜ not started — cron is hot, can run for several days continuously before May 11 to catch issues organically |
+| 8 | Buffer | ⬜ — current pacing leaves ~5 days of unforced buffer |
+
+Side errand still open: Walmart for tomato cage + clip-on fan.
+
 ## Risk register
 
 Ordered by *probability of killing a plant*, not by interestingness.
