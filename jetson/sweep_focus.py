@@ -36,7 +36,17 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--steps", type=int, default=8, help="Number of DAC positions to sample")
+    ap.add_argument("--dac-start", type=int, default=DAC_MIN,
+                    help=f"Lower DAC bound for the sweep (default {DAC_MIN}). "
+                         "Use to fine-sweep around a known peak.")
+    ap.add_argument("--dac-stop", type=int, default=DAC_MAX,
+                    help=f"Upper DAC bound for the sweep (default {DAC_MAX}).")
     args = ap.parse_args()
+
+    if not (DAC_MIN <= args.dac_start <= args.dac_stop <= DAC_MAX):
+        print(f"ERROR: dac range must satisfy {DAC_MIN} <= start <= stop <= {DAC_MAX}",
+              file=sys.stderr)
+        return 1
 
     out_dir = Path(os.path.expanduser(args.out_dir))
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -52,7 +62,12 @@ def main() -> int:
     focuser = Focuser(verbose=False)
     focuser.init()
 
-    dacs = [int(round(i * (DAC_MAX - DAC_MIN) / (args.steps - 1))) for i in range(args.steps)]
+    span = args.dac_stop - args.dac_start
+    if args.steps == 1:
+        dacs = [args.dac_start]
+    else:
+        dacs = [args.dac_start + int(round(i * span / (args.steps - 1)))
+                for i in range(args.steps)]
 
     print(f"Sweeping {len(dacs)} DAC positions: {dacs}")
     print(f"{'dac':>6}  {'tenengrad':>10}  filename")

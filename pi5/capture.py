@@ -42,7 +42,7 @@ from lib import dht, oled  # noqa: E402
 from lib.db import Db  # noqa: E402
 
 JETSON_HOST = "paul@jetson.local"
-JETSON_AF_DAC = 3510  # calibrated 2026-05-03; rerun ~/wy2z/sweep_focus.py if camera moves
+JETSON_AF_DAC = 2606  # calibrated 2026-05-03 evening (post camera-shift); rerun ~/wy2z/sweep_focus.py if camera moves
 JETSON_CAPTURE_SCRIPT = "~/wy2z/capture_one.py"
 
 LOG_PATH = Path("/tmp/wy2z-capture.log")
