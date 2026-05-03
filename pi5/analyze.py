@@ -1,13 +1,11 @@
 """Send a plant-lab photo to Claude Vision and get a structured JSON verdict.
 
-Eventually runs on the Pi 5 as part of the morning/evening capture loop.
-For now it can run locally on a Mac for testing.
+Library:
+    from analyze import analyze_photo
+    verdict = analyze_photo(Path("foo.jpg"), temp=24.5, humidity=58)
 
-Usage:
-    python3 analyze.py path/to/photo.jpg
-    python3 analyze.py path/to/photo.jpg --temp 24.5 --humidity 58
-
-Requires: ANTHROPIC_API_KEY in environment (or ../.env file)
+CLI:
+    python3 analyze.py path/to/photo.jpg [--temp X --humidity Y]
 """
 from __future__ import annotations
 
@@ -17,6 +15,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Optional
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
@@ -77,33 +76,37 @@ def strip_json_fence(text: str) -> str:
     return text.strip()
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("photo", help="Path to the JPG to analyze")
-    ap.add_argument("--temp", type=float, default=None, help="Air temp °C (DHT11)")
-    ap.add_argument("--humidity", type=float, default=None, help="Air humidity %% (DHT11)")
-    args = ap.parse_args()
+def analyze_photo(
+    photo: Path,
+    *,
+    temp: Optional[float] = None,
+    humidity: Optional[float] = None,
+    api_key: Optional[str] = None,
+) -> dict:
+    """Run Claude vision on a photo and return the parsed verdict dict.
 
-    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("ERROR: ANTHROPIC_API_KEY not set (env or .env)", file=sys.stderr)
-        return 1
-
-    photo = Path(args.photo).expanduser().resolve()
+    Raises:
+        FileNotFoundError    if photo doesn't exist
+        RuntimeError         if ANTHROPIC_API_KEY is missing
+        json.JSONDecodeError if Claude's response wasn't valid JSON
+    """
+    photo = Path(photo).expanduser().resolve()
     if not photo.exists():
-        print(f"ERROR: file not found: {photo}", file=sys.stderr)
-        return 1
+        raise FileNotFoundError(photo)
+
+    api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise RuntimeError("ANTHROPIC_API_KEY not set (env or .env)")
 
     image_b64, media_type = encode_image(photo)
 
     user_text = "Analyze this photo of the plant lab and return your JSON verdict."
-    if args.temp is not None or args.humidity is not None:
+    if temp is not None or humidity is not None:
         readings = []
-        if args.temp is not None:
-            readings.append(f"air temp = {args.temp:.1f} °C")
-        if args.humidity is not None:
-            readings.append(f"air humidity = {args.humidity:.0f}%")
+        if temp is not None:
+            readings.append(f"air temp = {temp:.1f} °C")
+        if humidity is not None:
+            readings.append(f"air humidity = {humidity:.0f}%")
         user_text += " Telemetry: " + ", ".join(readings) + "."
 
     client = Anthropic(api_key=api_key)
@@ -131,11 +134,28 @@ def main() -> int:
 
     raw = msg.content[0].text
     cleaned = strip_json_fence(raw)
+    return json.loads(cleaned)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("photo", help="Path to the JPG to analyze")
+    ap.add_argument("--temp", type=float, default=None, help="Air temp °C (DHT11)")
+    ap.add_argument("--humidity", type=float, default=None, help="Air humidity %% (DHT11)")
+    args = ap.parse_args()
+
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
     try:
-        verdict = json.loads(cleaned)
+        verdict = analyze_photo(Path(args.photo), temp=args.temp, humidity=args.humidity)
+    except FileNotFoundError as e:
+        print(f"ERROR: file not found: {e}", file=sys.stderr)
+        return 1
+    except RuntimeError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 1
     except json.JSONDecodeError as e:
         print(f"ERROR: Claude did not return valid JSON: {e}", file=sys.stderr)
-        print(f"--- raw response ---\n{raw}", file=sys.stderr)
         return 2
 
     print(json.dumps(verdict, indent=2))
