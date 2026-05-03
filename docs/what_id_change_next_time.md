@@ -4,15 +4,22 @@ A running list of v1 choices that worked-but-aren't-the-best, with the better v2
 
 ## Watering
 
-**v1 choice:** Brita 18-cup pitcher with vinyl drip tube + micro-holes, lever pressed by SG90 servo on an ESP32.
+**v0 attempt, abandoned 2026-05-03:** SG90 servo on ESP32, intended to press the Brita lever to dispense water. Built and bench-tested all the way through angle calibration (REST=10°, swept PRESS up through 45°→80°→140°→160°→nominal-200°) before hitting two showstoppers in sequence:
 
-**Why it's sub-optimal:**
-- 4.3 L total reservoir, depleted every 5-7 days even with drip — needs human refills during the 5-week trip
-- Gravity-fed flow rate decreases as level drops — same press-duration dispenses different volumes
-- No reservoir-level monitoring; system has no idea when Brita is empty
-- Servo failure modes (jam, hang) can drain the pitcher onto the floor
+1. **SG90 stall torque (~1.8 kg-cm) loses to the Brita lever's spring** — even at maximum travel the horn couldn't apply enough force to depress the dispense lever far enough to release water.
+2. **The "vinyl" drip tube is actually rigid 1/4" poly, not flexible vinyl** — so a pinch-valve fallback was also off the table. An end-of-tube plug-valve was sketched (10 g of head pressure on the plug, easily within SG90's torque budget) but not built — pivoted to a real pump instead.
 
-**v2 fix:** 5-gallon (19 L) bucket reservoir, 12V solenoid valve gated by ESP32 relay, ultrasonic distance sensor (HC-SR04) for level monitoring. Lasts the full 35 days unattended, deterministic flow, hard mechanical shutoff.
+The HTTP/Wi-Fi/`POST /water` scaffold from the ESP32 firmware survives the pivot — only the actuator changes.
+
+**v1 choice (in flight, pump arriving 2026-05-05):** small 5V DC water pump driven by an ESP32 GPIO through a transistor or relay. Brita stays as the v1 reservoir. Reuses the same `POST /water` endpoint; `water_pulse()` switches from `PWM duty` to `Pin.value(1) → sleep → Pin.value(0)`.
+
+**Why v1 is still sub-optimal:**
+- 4.3 L Brita depleted every 5–7 days → still needs human refills during the 5-week trip
+- Run-dry failure mode: if the Brita empties, the pump keeps firing and may burn out
+- No reservoir-level monitoring
+- Pump clogs/jams silently leave plants thirsty
+
+**v2 fix:** 5-gallon (19 L) bucket reservoir, ultrasonic distance sensor (HC-SR04) for level, optional 12V solenoid valve in series with the pump as a hard mechanical shutoff for power-loss / firmware-hang safety.
 
 **v2 fail-safe:** capillary mat or self-watering pots as a passive backup so plants survive even if smart system dies entirely.
 
