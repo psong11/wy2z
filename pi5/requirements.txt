@@ -1,4 +1,8 @@
+adafruit-circuitpython-dht>=4.0
+adafruit-circuitpython-ssd1306>=2.12
 anthropic>=0.39
+lgpio>=0.2
+Pillow>=10.0
 python-dotenv>=1.0
 requests>=2.31
 supabase>=2.5
