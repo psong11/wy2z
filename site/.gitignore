@@ -1,0 +1,12 @@
+# Local-only — repo root .gitignore covers most of this, but the site folder
+# is its own ecosystem and benefits from explicit ignores too.
+
+/node_modules
+/.next
+/out
+/build
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+.env*.local
+.DS_Store

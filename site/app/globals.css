@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular,
+    Menlo, monospace;
+  --font-sans: var(--font-newsreader), Georgia, serif;
+
+  /* The single wy2z accent — a soft sage that pops on the dark slate
+     background without becoming a "plant theme". */
+  --color-leaf: #8aaf8a;
+  --color-leaf-deep: #6b8e6b;
+
+  /* Surface palette — a slate-blue night sky. Slate-900 base, slate-800
+     for raised surfaces (footer, code blocks), slate-700 for hairline
+     borders. */
+  --color-surface: #0f172a;        /* slate-900 */
+  --color-surface-raised: #1e293b; /* slate-800 */
+  --color-border: #334155;         /* slate-700 */
+  --color-border-soft: #1e293b;    /* slate-800, subtler hairlines */
+  --color-text: #e2e8f0;           /* slate-200 */
+  --color-text-strong: #f8fafc;    /* slate-50 */
+  --color-text-muted: #94a3b8;     /* slate-400 */
+  --color-text-faint: #64748b;     /* slate-500 */
+}
+
+body {
+  font-family: var(--font-serif);
+  font-feature-settings: "kern", "liga", "onum";
+  text-rendering: optimizeLegibility;
+}
+
+/* Editorial prose for the build journal. Long-form reading on dark; the H1
+   functions as the page title (no separate hero). */
+.prose-article {
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  line-height: 1.7;
+}
+.prose-article h1 {
+  font-size: 3rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-text-strong);
+}
+@media (min-width: 640px) {
+  .prose-article h1 {
+    font-size: 4rem;
+  }
+}
+.prose-article > p:first-of-type {
+  font-size: 1.125rem;
+  color: var(--color-text-muted);
+  margin-bottom: 2rem;
+}
+.prose-article h2 {
+  font-size: 1.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  color: var(--color-text-strong);
+}
+.prose-article h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-text);
+}
+.prose-article p {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-size: 1.0625rem;
+}
+.prose-article hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: 2.5rem 0;
+}
+.prose-article blockquote {
+  border-left: 3px solid var(--color-leaf);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+.prose-article code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--color-surface-raised);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  color: var(--color-text);
+}
+.prose-article pre {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  line-height: 1.55;
+  color: var(--color-text);
+}
+.prose-article pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+.prose-article ul,
+.prose-article ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+.prose-article li {
+  margin: 0.35rem 0;
+}
+.prose-article ul li {
+  list-style: disc;
+}
+.prose-article ol li {
+  list-style: decimal;
+}
+.prose-article a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-text-faint);
+  text-underline-offset: 4px;
+}
+.prose-article a:hover {
+  text-decoration-color: var(--color-leaf);
+}
+.prose-article table {
+  width: 100%;
+  margin: 2rem 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.prose-article th,
+.prose-article td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.prose-article th {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-text-faint);
+  font-weight: 500;
+}
+.prose-article strong {
+  font-weight: 600;
+  color: var(--color-text-strong);
+}
+.prose-article em {
+  font-style: italic;
+}
