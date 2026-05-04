@@ -325,3 +325,83 @@ I haven't left for Gilroy yet. The plants haven't been watered by a machine yet.
 | Times the system will run itself before I'm back | ~70 |
 | Commits today | 5 |
 | Days until departure | 8 |
+
+---
+
+## May 3, 2026 (later) — Walking the Lens Home
+
+After dinner I came back to fire one more test capture before bed — just to confirm the loop survived a real round-trip with fresh eyes. The photo landed in Supabase. I opened it.
+
+It was blurry.
+
+Not scene-blurry. Not motion-blurry. Out-of-focus blurry. The grow-light bulb dominated the frame, the plants were soft green smudges, the OLED on the wall was an unreadable rectangle. The same calibrated DAC value — 3510 — that gave me a sharp image at 3 PM was now producing mush. Claude noticed too: the verdict came back caveated, every plant marked at lower confidence than the morning, the scene notes flagging *"image is somewhat blurry and overexposed near the grow light."*
+
+Something between 3 PM and 8 PM had moved.
+
+---
+
+I ran a fresh focus sweep — eight DAC positions, full range, log the Tenengrad score at each. The peak had walked itself across the dial.
+
+```
+dac=2234  →  1241   ← old slope
+dac=2606  →  2659   ← new peak, 5x neighbors
+dac=2978  →   732
+dac=3510  →   358   ← yesterday's calibration
+dac=4095  →   175
+```
+
+DAC 2606 was the new sharp. DAC 3510 was now soft. The camera or the scene had shifted by enough that the lens needed to focus several hundred DAC steps closer. I baked the new value into the orchestrator and re-fired the capture script.
+
+Still soft.
+
+---
+
+This is the part of debugging where the easy story breaks and the hard story begins.
+
+The sweep at DAC 2606 was sharp. The orchestrator at DAC 2606 was soft. Same camera, same lens, same scene, seconds apart, same number written to the same I2C register. Different image.
+
+I ran the orchestrator three more times. Soft, soft, soft — all visibly identical, all 140 KB JPEGs where the sweep's sharp ones were 220 KB. Then I ran the sweep again and pulled the dac_2606.jpg straight off the Jetson. Sharp. Same DAC. Same minute.
+
+The difference was structural. The sweep walks through DAC values one at a time — sets 0, sleeps, captures a frame, sets 372, sleeps, captures a frame, ramps gradually upward to 2606. The orchestrator just *jumps* directly to the target — one I2C transaction, one settle, one capture. The two paths land the lens at the same nominal coordinate by different routes, and the lens evidently cares which route it took.
+
+Voice coil motors have springs. They have inertia. A big single-step current pulse asks the lens to move 2,606 DAC units of distance in one go and the spring oscillates as it overshoots and pulls back. By the time the camera actually captures a frame, the lens hasn't fully damped — it's still ringing on its mount, smearing edges. Walking the lens up in smaller steps with a deliberate pause and a frame-flush at each one gave the spring time to bleed its energy off between motions. The lens arrived calmly instead of arriving loud.
+
+---
+
+The fix was a six-line change. Where the orchestrator used to call
+
+```python
+focuser.set_position(2606)
+```
+
+it now calls
+
+```python
+for stop in (target // 4, target // 2, 3 * target // 4, target):
+    focuser.set_position(stop)
+    time.sleep(0.3)
+    cap.read()
+```
+
+Four small moves, each with a 300 ms pause and a frame-flush. The lens walks home.
+
+The next test photo landed at 220 KB. Sharp leaves, readable book spine on the bookshelf to the right of the tomato pot, plant tag legible inside the soil, OLED text visible in the bottom of the frame. Claude's verdict came back at 0.65–0.75 confidence and finally *named* the thing it had been struggling to name all afternoon: a slight yellowing on one of zinnia_b's lower leaves. A real observation, made possible only because the photo could finally support it.
+
+---
+
+There's a physical-systems lesson buried in this one. Software people, including me, default to thinking about coordinates — *the lens is at DAC 2606* — as if the coordinate were the thing. But the lens isn't at DAC 2606. The lens is at *whatever-actual-mechanical-equilibrium-position-results-from-asking-DAC-2606-to-be-true-while-a-spring-pulls-against-a-coil-and-friction-resists*. The number is a request. The spring decides whether to honor it cleanly or noisily.
+
+The number doesn't move things. The number times the path you took to get there moves things.
+
+---
+
+| What | Value |
+|------|-------|
+| Calibration recalibrated | DAC 3510 → 2606 |
+| Tenengrad peak score (post-shift) | 2659 |
+| Capture paths that produced soft images | 1 (single-jump) |
+| Capture paths that produced sharp images | 1 (multi-step ramp) |
+| Sharp-photo file size | ~220 KB |
+| Soft-photo file size | ~140 KB |
+| Lines changed in `capture_one.py` | 6 |
+| Days until departure | 8 |
