@@ -506,4 +506,5 @@ The fix for power_save is a one-line NetworkManager config (`wifi.powersave = 2`
 | Lines added to `pi5/capture.py` | ~30 |
 | First successful end-to-end watering | 2026-05-06 22:54 CT |
 | Plants watered by a machine for the first time ever | 1 (tomato) |
+| Lead fumes inhaled from soldering | too much |
 | Days until departure | 5 |
