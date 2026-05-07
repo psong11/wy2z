@@ -1,18 +1,18 @@
 import Image from "next/image";
 import { formatDateOnly, formatTimeOnly } from "@/lib/time";
-
-type StripPhoto = {
-  url: string;
-  capturedAt: string; // ISO UTC
-  mode: "morning" | "evening" | "test" | string | null;
-};
+import type { Observation } from "@/lib/observations";
+import { CaptureAction } from "./capture-action";
 
 type Props = {
-  photos: StripPhoto[];
+  observations: Observation[];
 };
 
-export function PhotoStrip({ photos }: Props) {
-  if (photos.length === 0) {
+function modeOf(obs: Observation): string | null {
+  return (obs.notes ?? "").match(/mode=(\w+)/)?.[1] ?? null;
+}
+
+export function PhotoStrip({ observations }: Props) {
+  if (observations.length === 0) {
     return null;
   }
 
@@ -28,33 +28,39 @@ export function PhotoStrip({ photos }: Props) {
         style={{ scrollSnapType: "x mandatory" }}
       >
         <ul className="mx-auto flex max-w-[68ch] gap-4">
-          {photos.map((photo) => (
-            <li
-              key={photo.capturedAt + photo.url}
-              className="shrink-0 basis-[40%] sm:basis-[28%]"
-              style={{ scrollSnapAlign: "start" }}
-            >
-              <a
-                href={photo.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
+          {observations.map((obs) => {
+            const mode = modeOf(obs);
+            return (
+              <li
+                key={obs.id}
+                className="shrink-0 basis-[40%] sm:basis-[28%]"
+                style={{ scrollSnapAlign: "start" }}
               >
-                <Image
-                  src={photo.url}
-                  alt={`Capture from ${formatDateOnly(photo.capturedAt)} at ${formatTimeOnly(photo.capturedAt)}`}
-                  width={1920}
-                  height={1080}
-                  sizes="(max-width: 640px) 40vw, 200px"
-                  className="h-auto w-full rounded-sm border border-slate-700"
-                />
-                <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.15em] text-slate-500">
-                  {formatDateOnly(photo.capturedAt)} · {formatTimeOnly(photo.capturedAt)}
-                  {photo.mode && photo.mode !== "test" ? ` · ${photo.mode}` : ""}
-                </p>
-              </a>
-            </li>
-          ))}
+                <a
+                  href={obs.photo_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <Image
+                    src={obs.photo_url}
+                    alt={`Capture from ${formatDateOnly(obs.captured_at)} at ${formatTimeOnly(obs.captured_at)}`}
+                    width={1920}
+                    height={1080}
+                    sizes="(max-width: 640px) 40vw, 200px"
+                    className="h-auto w-full rounded-sm border border-slate-700"
+                  />
+                  <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.15em] text-slate-500">
+                    {formatDateOnly(obs.captured_at)} · {formatTimeOnly(obs.captured_at)}
+                    {mode && mode !== "test" ? ` · ${mode}` : ""}
+                  </p>
+                  <div className="mt-1 min-h-[14px]">
+                    <CaptureAction observation={obs} variant="compact" />
+                  </div>
+                </a>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </section>

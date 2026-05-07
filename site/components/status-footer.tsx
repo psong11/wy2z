@@ -6,14 +6,21 @@ const REPO_URL = "https://github.com/psong11/wy2z";
 type Props = {
   lastCapturedAt: string | null; // ISO UTC
   totalObservations: number;
+  firstWateredAt: string | null; // ISO UTC of the first observation where the pump fired
 };
 
-export function StatusFooter({ lastCapturedAt, totalObservations }: Props) {
+export function StatusFooter({ lastCapturedAt, totalObservations, firstWateredAt }: Props) {
   const rows: ReadonlyArray<readonly [string, React.ReactNode]> = [
     [
       "Last Capture",
       lastCapturedAt
         ? `${formatAbsolute(lastCapturedAt)} CT · ${formatRelative(lastCapturedAt)}`
+        : "—",
+    ],
+    [
+      "First Automated Watering",
+      firstWateredAt
+        ? `${formatAbsolute(firstWateredAt)} CT · ${formatRelative(firstWateredAt)}`
         : "—",
     ],
     [

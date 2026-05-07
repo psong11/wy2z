@@ -31,7 +31,7 @@ const PHASES: Phase[] = [
   {
     step: "04",
     title: "Dispense",
-    body: "If a plant is flagged for water, the Pi pings the ESP32 over Wi-Fi. The board switches a 5V pump that pushes Brita water through a vinyl tube into the soil.",
+    body: "If any plant is flagged for water, the Pi POSTs to the ESP32 over Wi-Fi. The ESP32 pulls a GPIO high, which saturates an NPN BJT switching a 5V pump. Water moves from a Brita pitcher through a vinyl tube into the soil. The pump's HTTP ack — duration in milliseconds — lands back in the observation row alongside the verdict.",
   },
 ];
 
@@ -319,7 +319,8 @@ export function HowItWorks() {
           One Raspberry Pi orchestrates four moving parts on a 12-hour clock:
           a camera that&rsquo;s a separate computer, a sensor on a GPIO pin,
           a vision model in a datacenter somewhere, and a Wi-Fi microcontroller
-          that pushes water on command.
+          that pushes water on command. The full loop &mdash; cron to capture
+          to verdict to pump &mdash; first ran in production on May 6, 2026.
         </p>
       </div>
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Narrative from "@/content/narrative.mdx";
 import { StatusFooter } from "@/components/status-footer";
 import {
+  fetchFirstWateredAt,
   fetchObservationCount,
   fetchRecentObservations,
 } from "@/lib/observations";
@@ -15,9 +16,10 @@ export const metadata = {
 };
 
 export default async function JournalPage() {
-  const [observations, totalCount] = await Promise.all([
+  const [observations, totalCount, firstWateredAt] = await Promise.all([
     fetchRecentObservations(1),
     fetchObservationCount(),
+    fetchFirstWateredAt(),
   ]);
   const latest = observations[0] ?? null;
 
@@ -42,6 +44,7 @@ export default async function JournalPage() {
       <StatusFooter
         lastCapturedAt={latest?.captured_at ?? null}
         totalObservations={totalCount}
+        firstWateredAt={firstWateredAt}
       />
     </main>
   );

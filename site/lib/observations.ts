@@ -33,6 +33,24 @@ export async function fetchRecentObservations(limit = 30): Promise<Observation[]
   return (data ?? []) as Observation[];
 }
 
+/** ISO timestamp of the earliest observation whose pump call actually
+ *  fired. Returns null until the first successful watering. Drives the
+ *  "First Automated Watering" row in the status footer. */
+export async function fetchFirstWateredAt(): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("observations")
+    .select("captured_at")
+    .eq("action_taken", "watered")
+    .order("captured_at", { ascending: true })
+    .limit(1);
+
+  if (error) {
+    console.error("[wy2z] fetchFirstWateredAt failed", error);
+    return null;
+  }
+  return data?.[0]?.captured_at ?? null;
+}
+
 /** Total row count — drives the status footer's "X observations" line. */
 export async function fetchObservationCount(): Promise<number> {
   const { count, error } = await supabase
