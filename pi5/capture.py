@@ -24,9 +24,11 @@ leave a trail.
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import subprocess
 import sys
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 
@@ -44,6 +46,9 @@ from lib.db import Db  # noqa: E402
 JETSON_HOST = "paul@jetson.local"
 JETSON_AF_DAC = 2606  # calibrated 2026-05-03 evening (post camera-shift); rerun ~/wy2z/sweep_focus.py if camera moves
 JETSON_CAPTURE_SCRIPT = "~/wy2z/capture_one.py"
+
+WATER_ENDPOINT = "http://wy2z-water.local/water"
+WATER_TIMEOUT_S = 10
 
 LOG_PATH = Path("/tmp/wy2z-capture.log")
 
@@ -94,6 +99,24 @@ def _fetch_photo(remote_out: str, local_out: Path) -> None:
         ["ssh", JETSON_HOST, f"rm -f {remote_out}"],
         capture_output=True, text=True, timeout=10,
     )
+
+
+def _trigger_water() -> tuple[str, str, dict | None]:
+    """POST to the ESP32 water endpoint. Soft-fail: never raises.
+    Returns (action_taken, action_result, response_payload)."""
+    req = urllib.request.Request(WATER_ENDPOINT, data=b"", method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=WATER_TIMEOUT_S) as resp:
+            body = resp.read().decode()
+        log.info("water endpoint ack: %s", body)
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError:
+            payload = {"raw": body}
+        return "watered", "ok", payload
+    except Exception as e:
+        log.warning("water endpoint failed: %s", e)
+        return "logged_only", f"esp32_unreachable: {e}", None
 
 
 def _short_verdict_summary(verdict: dict) -> str:
@@ -173,15 +196,28 @@ def run_capture(mode: str = "test") -> dict:
         p["plant"] for p in verdict.get("plants", [])
         if p.get("action") == "water" and p.get("visible")
     ]
+    if needing_water:
+        action_taken, action_result, water_response = _trigger_water()
+        action_payload = {
+            "plants_flagged_for_water": needing_water,
+            "endpoint": WATER_ENDPOINT,
+        }
+        if water_response is not None:
+            action_payload["water_response"] = water_response
+    else:
+        action_taken = "none"
+        action_payload = None
+        action_result = None
+
     obs_id = db.insert_observation(
         photo_path=storage_key,
         photo_url=public_url,
         air_temp_c=temp_c,
         air_humidity_pct=humidity,
         verdict=verdict,
-        action_taken="logged_only" if needing_water else "none",
-        action_payload={"plants_flagged_for_water": needing_water} if needing_water else None,
-        action_result="skipped" if needing_water else None,
+        action_taken=action_taken,
+        action_payload=action_payload,
+        action_result=action_result,
         notes=f"mode={mode}",
     )
     log.info("observation row: %s", obs_id)

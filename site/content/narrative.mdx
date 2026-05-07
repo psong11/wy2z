@@ -405,3 +405,105 @@ The number doesn't move things. The number times the path you took to get there 
 | Soft-photo file size | ~140 KB |
 | Lines changed in `capture_one.py` | 6 |
 | Days until departure | 8 |
+
+---
+
+## May 6, 2026 — The Pump Comes Online
+
+The pump arrived Tuesday. A small 5V DC USB-A mini pump, the kind you'd find inside a desktop fountain. The plan was the one I'd been carrying since the SG90 lost the fight with the Brita lever: feed the pump from a wall adapter, switch it on and off through an NPN BJT, drive the BJT's base from an ESP32 GPIO, keep the existing `POST /water` HTTP scaffold so the Pi side wouldn't have to know anything had changed.
+
+I drew the circuit on graph paper, laid out the parts on the breadboard, soldered the leads on the pump, sat down to write the firmware. I was going to be done by 8.
+
+I was not done by 8.
+
+---
+
+The first test fired the GPIO high for one second, the multimeter said the GPIO was at 3.3V, the base of the BJT was at 0.7V, the transistor's base-emitter junction was clearly conducting, and absolutely nothing happened to the pump. No spin. No twitch. No buzz. The pump sat there.
+
+I added a longer hold so I could probe more carefully. The collector dropped to zero volts during the hold, which would be the textbook sign of a transistor saturating cleanly into its load. The pump still didn't move.
+
+Then I did the thing you do when nothing makes sense: I measured every voltage I could think of. Voltage across the pump terminals was 0.7V at idle and 1.3V when the test was running — exactly one diode forward-drop and then a slightly larger one as current rose. Voltage across the BJT collector-to-emitter was 3.7V when the BJT was supposedly "on" — which meant the BJT was eating most of the supply voltage and the pump was being given the leftover crumbs.
+
+I had built two failures stacked on top of each other and they were taking turns explaining the symptoms.
+
+---
+
+The first failure was the flyback diode. I'd put it across the pump for inductive-spike protection — correctly identifying that the motor coil would generate a back-EMF when current was cut and that the spike would punch through the transistor unless given a safe path home. What I had *not* done correctly was orient it. The cathode (the banded end) was on the collector side instead of the supply side. Reverse-biased in normal operation is what you want. Forward-biased in normal operation is what I had. The diode wasn't a flyback diode; it was a permanent shunt around the pump, eating most of the current and dropping a single forward voltage across itself, which was exactly what the multimeter was telling me. Flip the diode, the bypass closes.
+
+The second failure was more philosophical and more humbling. I had two power supplies on the breadboard: one for the ESP32 over micro-USB, one for the pump from a 5V/3A wall adapter. They had two separate ground rails. The ESP32's ground and the pump's ground were unconnected.
+
+A BJT is a current-controlled switch. To open the channel you have to push current into the base, and *that current has to come out of the emitter and find its way back to the source that pushed it*. If the source is the ESP32 GPIO and the emitter is grounded to the pump supply rather than the ESP32 rail, the loop never closes. The base voltage looked correct because the multimeter is a high-impedance witness — it'll measure a potential difference across two unrelated reference points and report a number, but the number doesn't mean anything when there's no actual current flowing. We measured "18 volts" between the pump rails and the ESP32 ground at one point during the debugging, which was nonsense, which was the meter saying *there is no shared reference between these two things and you are asking a question that has no answer*.
+
+A single jumper wire from the wall adapter's negative output to the ESP32's GND pin made the question answerable.
+
+---
+
+There's a lesson in that one wire that I've been writing down in my head all evening.
+
+When you write software, "communication" is a word that comes free. Two functions in the same process share the call stack. Two services in the same network share the protocol. The plumbing is invisible until something breaks it.
+
+When you wire physical hardware, communication is *literally a closed loop of moving electrons*, and the loop has to actually exist in copper. Every wire is part of a path. The path goes out of the supply's positive terminal, through the load, through the switch, back to the supply's negative terminal — and if any segment is missing, the whole thing is dead, silent, no error message, no exception, just a pump that doesn't spin and a meter reading you can't trust.
+
+The phrase "common ground" is so worn out as a metaphor that it took me an hour of debugging to remember it's a literal electrical requirement.
+
+---
+
+Once the diode was right and the grounds were tied, the test pulse worked on the first try. The pump ran for one second, then ten seconds, then five. The wiring was correct. The schematic was correct. The schematic had been correct for two hours; what had been wrong was the gap between the schematic and the breadboard.
+
+Porting it into `main.py` took five minutes. The old SG90 code came out, the BJT-pulse code went in, the HTTP server stayed exactly as it was. `POST /water` now does what its name has always claimed to do.
+
+```python
+PUMP_PIN = 4
+PUMP_PULSE_MS = 5000
+
+pump = Pin(PUMP_PIN, Pin.OUT, value=0)
+
+def water_pulse():
+    pump.value(1)
+    time.sleep_ms(PUMP_PULSE_MS)
+    pump.value(0)
+```
+
+The Pi-side change was even smaller. `pi5/capture.py` had been writing `action_taken = "logged_only"` whenever Claude flagged a plant as needing water — the verdict landed in the database, the OLED summarized it, but nothing physical happened. I added a helper that POSTs to `http://wy2z-water.local/water` whenever the verdict has any plant flagged for water, recorded the ESP32's JSON ack into the observation row, and let the existing failure-handling pattern catch any unreachable-endpoint case as a soft fail.
+
+Then I ran one capture pass to test it.
+
+```
+2026-05-06 22:53:34 dht11: 20.6C 52%
+2026-05-06 22:53:42 photo on pi: 202214 bytes
+2026-05-06 22:53:43 uploaded to Supabase
+2026-05-06 22:53:59 verdict: tomato → water
+2026-05-06 22:54:02 water endpoint ack: {"status":"ok","duration_ms":5000}
+```
+
+The tomato got its first automated drink at 10:54 PM Central, three days into a five-week experiment, on a setup that had only existed as a closed loop for about ninety seconds at that point. Observation `77770a50-9bdd-46e8-b4fc-789f8bef06c6` is the row in the database that records it.
+
+---
+
+There was a coda that night, and it was almost as instructive as the main act.
+
+Earlier in the evening, before the pump worked, the OLED had briefly shown `ERR: capture` after the 19:30 cron. The Pi's log showed the failure was at the Jetson SSH step: `ssh: connect to host 192.168.0.224 port 22: No route to host`. By the time I got to the Pi to investigate, the Jetson was up, reachable, the IP was the same as the SSH config pinned, the host hadn't rebooted in three days. Whatever had broken at 19:30 had healed itself.
+
+I dug through the Jetson's network state. Excellent signal at -38 dBm. No NetworkManager log entries for the failure window. No kernel events. Then I checked one specific thing on a hunch: `iw dev wlP1p1s0 get power_save`. It came back: `Power save: on`.
+
+The Jetson's Wi-Fi card is allowed to put itself into a low-power state when idle. From the AP's perspective the Jetson is still associated. From the Jetson's perspective the radio is mostly off. When an inbound packet arrives — like the cron's once-every-twelve-hours SSH attempt — the radio takes hundreds of milliseconds to wake up. ARP queries during that window get nothing back, the kernel returns "No route to host", the SSH client gives up. Minutes later when something else triggers traffic, the radio is awake and everything is fine. The host is *almost* always reachable; the failure mode is precisely the case the cron job is most exposed to.
+
+This is the mirror image of the common-ground bug. The common-ground bug was the hardware proving that *every wire matters even when software thinks they're abstractions*. The Wi-Fi-power-save bug was the radio proving that *every connection matters even when the kernel thinks they're permanent*. In both cases, a layer that I had been mentally treating as continuous turned out to be discrete, with gaps you can fall into if you don't check.
+
+The fix for power_save is a one-line NetworkManager config (`wifi.powersave = 2`, "force off") plus a service restart. Documented in `docs/jetson_wifi_powersave.md`. Has to be applied with sudo on the Jetson itself, because the SSH playbook intentionally caps non-interactive sudo at the i2c tools and nothing else.
+
+---
+
+| What | Value |
+|------|-------|
+| Pump pulses fired before one worked | ~12 |
+| Distinct hardware bugs found | 3 (backwards diode, missing common ground, BJT E/C orientation) |
+| Distinct network bugs found | 1 (Jetson Wi-Fi power_save) |
+| Multimeter probings | uncountable |
+| Voltage across pump when "off" | 0.7V (diode forward drop, sign of bypass) |
+| Voltage across BJT when "on" | 3.7V → 0.05V (after fixes) |
+| Lines changed in `esp32/main.py` | ~25 |
+| Lines added to `pi5/capture.py` | ~30 |
+| First successful end-to-end watering | 2026-05-06 22:54 CT |
+| Plants watered by a machine for the first time ever | 1 (tomato) |
+| Days until departure | 5 |

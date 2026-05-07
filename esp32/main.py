@@ -2,36 +2,30 @@ import network
 import time
 import socket
 import gc
-from machine import Pin, PWM
+from machine import Pin
 
 import secrets  # esp32/secrets.py — gitignored, holds WIFI_SSID + WIFI_PASSWORD
 
-# --- Servo config ---
-# SG90 on GPIO 13. PWM frequency must be 50Hz (20ms period) for hobby servos.
-# duty_u16 is the 16-bit duty cycle (0-65535 = 0-100% of the 20ms period).
-#   1.0ms pulse  →  5.0% →  3277  (≈   0°)
-#   1.5ms pulse  →  7.5% →  4915  (≈  90°)
-#   2.0ms pulse  → 10.0% →  6553  (≈ 180°)
-SERVO_PIN = 13
-PWM_FREQ = 50
-
-REST_DUTY = 3460       # ≈  10° — servo arm clear of the lever
-PRESS_DUTY = 6917      # nominal "200°" — SG90 actual rotation falls short of math, tuned empirically
-PRESS_HOLD_MS = 5000   # v1: 5 seconds per dose
+# --- Pump config ---
+# 5V DC pump driven via NPN BJT (2N2222A) low-side switch on GPIO 4.
+# HIGH → base conducts → BJT saturates → pump runs. LOW → off.
+# 1kΩ base resistor; 1N4001 flyback diode across pump (cathode on +5V).
+PUMP_PIN = 4
+PUMP_PULSE_MS = 5000   # v1: 5 seconds per dose — tune after measuring mL/sec
 
 HOSTNAME = "wy2z-water"
 
-# --- Servo: initialize at REST as the very first thing ---
-servo = PWM(Pin(SERVO_PIN), freq=PWM_FREQ, duty_u16=REST_DUTY)
-print("[boot] servo init at REST_DUTY =", REST_DUTY)
+# --- Pump: initialize OFF as the very first thing ---
+pump = Pin(PUMP_PIN, Pin.OUT, value=0)
+print("[boot] pump init OFF on GPIO", PUMP_PIN)
 
 
 def water_pulse():
-    print("[water] PRESS")
-    servo.duty_u16(PRESS_DUTY)
-    time.sleep_ms(PRESS_HOLD_MS)
-    servo.duty_u16(REST_DUTY)
-    print("[water] REST")
+    print("[water] ON")
+    pump.value(1)
+    time.sleep_ms(PUMP_PULSE_MS)
+    pump.value(0)
+    print("[water] OFF")
 
 
 def wifi_connect(timeout_s=30):
@@ -93,7 +87,7 @@ def serve():
                 water_pulse()
                 cl.send(http_response(
                     "200 OK",
-                    '{"status":"ok","duration_ms":' + str(PRESS_HOLD_MS) + "}",
+                    '{"status":"ok","duration_ms":' + str(PUMP_PULSE_MS) + "}",
                 ))
             elif method == "GET" and path == "/":
                 cl.send(http_response(
