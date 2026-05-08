@@ -8,6 +8,7 @@ import { PlantCard } from "@/components/plant-card";
 import { PhotoStrip } from "@/components/photo-strip";
 import { TempHumidityChart } from "@/components/temp-humidity-chart";
 import { HowItWorks } from "@/components/how-it-works";
+import { BuildGallery } from "@/components/build-gallery";
 import { StatusFooter } from "@/components/status-footer";
 import { StaleBanner } from "@/components/stale-banner";
 
@@ -134,6 +135,8 @@ export default async function HomePage() {
       <PhotoStrip observations={stripFallback} />
 
       <HowItWorks />
+
+      <BuildGallery />
 
       <StatusFooter
         lastCapturedAt={latest?.captured_at ?? null}
