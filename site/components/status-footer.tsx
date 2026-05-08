@@ -29,7 +29,7 @@ export function StatusFooter({ lastCapturedAt, totalObservations, firstWateredAt
     ],
     [
       "Cadence",
-      "07:30 · 19:30 CT — twice daily",
+      "07:30 · 13:30 · 19:30 CT — three times daily",
     ],
     [
       "Journal",

@@ -11,7 +11,7 @@ import secrets  # esp32/secrets.py — gitignored, holds WIFI_SSID + WIFI_PASSWO
 # HIGH → base conducts → BJT saturates → pump runs. LOW → off.
 # 1kΩ base resistor; 1N4001 flyback diode across pump (cathode on +5V).
 PUMP_PIN = 4
-PUMP_PULSE_MS = 5000   # v1: 5 seconds per dose — tune after measuring mL/sec
+PUMP_PULSE_MS = 8000   # v1: 8 seconds per dose — tune after measuring mL/sec
 
 HOSTNAME = "wy2z-water"
 

@@ -240,7 +240,7 @@ def run_capture(mode: str = "test") -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--mode", choices=["test", "morning", "evening"], default="test")
+    ap.add_argument("--mode", choices=["test", "morning", "midday", "evening"], default="test")
     args = ap.parse_args()
     try:
         result = run_capture(args.mode)
