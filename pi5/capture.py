@@ -242,7 +242,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--mode",
-        choices=["test", "morning", "late_morning", "midday", "afternoon", "evening"],
+        choices=["test", "morning", "midday", "afternoon", "evening"],
         default="test",
     )
     args = ap.parse_args()

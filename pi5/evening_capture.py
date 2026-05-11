@@ -1,7 +1,7 @@
 """Cron entry point — evening capture pass.
 
 Cron line on the Pi:
-    0 19 * * * /home/paul/wy2z/.venv/bin/python /home/paul/wy2z/pi5/evening_capture.py
+    30 19 * * * /home/paul/wy2z/.venv/bin/python /home/paul/wy2z/pi5/evening_capture.py
 """
 import sys
 from pathlib import Path

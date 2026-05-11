@@ -1,7 +1,7 @@
 """Cron entry point — midday capture pass.
 
 Cron line on the Pi:
-    30 13 * * * /home/paul/wy2z/.venv/bin/python /home/paul/wy2z/pi5/midday_capture.py
+    30 11 * * * /home/paul/wy2z/.venv/bin/python /home/paul/wy2z/pi5/midday_capture.py
 """
 import sys
 from pathlib import Path
