@@ -6,6 +6,7 @@ import { HeroPhoto } from "@/components/hero-photo";
 import { CaptureAction } from "@/components/capture-action";
 import { PlantCard } from "@/components/plant-card";
 import { PhotoStrip } from "@/components/photo-strip";
+import { TimelapsePlayer } from "@/components/timelapse-player";
 import { TempHumidityChart } from "@/components/temp-humidity-chart";
 import { HowItWorks } from "@/components/how-it-works";
 import { BuildGallery } from "@/components/build-gallery";
@@ -133,6 +134,14 @@ export default async function HomePage() {
       <TempHumidityChart readings={chartReadings} />
 
       <PhotoStrip observations={stripFallback} />
+
+      {latest && process.env.NEXT_PUBLIC_SUPABASE_URL && (
+        <TimelapsePlayer
+          videoUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/plant-photos/timelapse.mp4`}
+          posterUrl={latest.photo_url}
+          frameCount={totalCount}
+        />
+      )}
 
       <HowItWorks />
 

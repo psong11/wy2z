@@ -20,6 +20,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // @ffmpeg-installer ships a native binary per platform. Mark the package
+  // external so Next doesn't try to bundle its require(), and force the
+  // linux-x64 binary into the function trace for build-timelapse — without
+  // this, ffmpegInstaller.path resolves to a file Vercel didn't ship.
+  serverExternalPackages: ["@ffmpeg-installer/ffmpeg"],
+  outputFileTracingIncludes: {
+    "/api/build-timelapse": [
+      "./node_modules/@ffmpeg-installer/linux-x64/**",
+    ],
+  },
 };
 
 const withMDX = createMDX({
