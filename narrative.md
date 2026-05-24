@@ -35,7 +35,6 @@ There's definitely more to unpack there, and I'm excited to explore how I can us
 - electricity
 - systems thinking
 - a knack for design principles
-- a good design eye
 
 — and try to envision a future where all of these different segments of thought and disciplines are now able to converge to create more interconnected systems that integrate technology and nature to produce good, healthy, affordable outcomes for local communities.
 
