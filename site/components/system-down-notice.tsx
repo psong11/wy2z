@@ -32,14 +32,14 @@ export function SystemDownNotice({ lastCapturedAt }: Props) {
         </p>
         <ul className="mt-2 space-y-1.5 font-serif text-sm text-rose-100/80">
           <li>
-            <span className="text-rose-200">SD card corruption.</span> The Pi
-            has been writing to the same flash cells 4×/day for weeks. One bad
-            sector flips the root filesystem read-only and the next cron run
-            can&apos;t do anything.
+            <span className="text-rose-200">SD card corruption.</span>{" "}
+            The Pi has been writing to the same flash cells 4×/day for weeks.
+            One bad sector flips the root filesystem read-only and the next
+            cron run can&apos;t do anything.
           </li>
           <li>
-            <span className="text-rose-200">Marginal USB-C power.</span> A
-            non-PD brick + a fridge compressor kicking on = brown-out = Pi
+            <span className="text-rose-200">Marginal USB-C power.</span>{" "}
+            A non-PD brick + a fridge compressor kicking on = brown-out = Pi
             hard-resets. Sometimes survives, sometimes not.
           </li>
           <li>
@@ -48,9 +48,9 @@ export function SystemDownNotice({ lastCapturedAt }: Props) {
             exactly like this to the dashboard.
           </li>
           <li>
-            <span className="text-rose-200">Wi-Fi driver wedged.</span> Pi 5&apos;s
-            onboard radio occasionally locks up after long uptime — kernel
-            doesn&apos;t notice, NetworkManager doesn&apos;t recover.
+            <span className="text-rose-200">Wi-Fi driver wedged.</span>{" "}
+            Pi 5&apos;s onboard radio occasionally locks up after long uptime —
+            kernel doesn&apos;t notice, NetworkManager doesn&apos;t recover.
           </li>
         </ul>
 
