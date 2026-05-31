@@ -12,6 +12,7 @@ import { HowItWorks } from "@/components/how-it-works";
 import { BuildGallery } from "@/components/build-gallery";
 import { StatusFooter } from "@/components/status-footer";
 import { StaleBanner } from "@/components/stale-banner";
+import { SystemDownNotice } from "@/components/system-down-notice";
 
 export const revalidate = 1800; // 30 minutes — cron fires every 12h, so 30m
                                 // staleness is invisible to a viewer.
@@ -79,6 +80,8 @@ export default async function HomePage() {
       <StaleBanner lastCapturedAt={latest?.captured_at ?? null} />
 
       <HeroHeader />
+
+      <SystemDownNotice lastCapturedAt={latest?.captured_at ?? null} />
 
       {latest ? (
         <>
