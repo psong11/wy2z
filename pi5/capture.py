@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import subprocess
 import sys
 import urllib.request
@@ -49,6 +50,9 @@ JETSON_CAPTURE_SCRIPT = "~/wy2z/capture_one.py"
 
 WATER_ENDPOINT = "http://wy2z-water.local/water"
 WATER_TIMEOUT_S = 10
+
+REVALIDATE_ENDPOINT = "https://wy2z.vercel.app/api/revalidate"
+REVALIDATE_TIMEOUT_S = 10
 
 LOG_PATH = Path("/tmp/wy2z-capture.log")
 
@@ -117,6 +121,29 @@ def _trigger_water() -> tuple[str, str, dict | None]:
     except Exception as e:
         log.warning("water endpoint failed: %s", e)
         return "logged_only", f"esp32_unreachable: {e}", None
+
+
+def _notify_dashboard() -> None:
+    """Tell Vercel to invalidate the dashboard's ISR cache so the new
+    observation shows up within seconds instead of up to 30 minutes.
+
+    Best-effort — a failure here MUST NOT abort the capture, since the
+    time-based revalidate fallback will catch us within 30 min anyway.
+    """
+    secret = os.environ.get("CRON_SECRET")
+    if not secret:
+        log.warning("CRON_SECRET not set, skipping dashboard notify")
+        return
+    try:
+        req = urllib.request.Request(
+            REVALIDATE_ENDPOINT,
+            method="POST",
+            headers={"Authorization": f"Bearer {secret}"},
+        )
+        with urllib.request.urlopen(req, timeout=REVALIDATE_TIMEOUT_S) as resp:
+            log.info("dashboard revalidate: %s", resp.read().decode("utf-8")[:200])
+    except Exception as e:
+        log.warning("dashboard revalidate failed: %s", e)
 
 
 def _short_verdict_summary(verdict: dict) -> str:
@@ -221,6 +248,10 @@ def run_capture(mode: str = "test") -> dict:
         notes=f"mode={mode}",
     )
     log.info("observation row: %s", obs_id)
+
+    # 7b. Tell the dashboard a fresh row exists so ISR invalidates now,
+    #     not 30 minutes from now. Best-effort; failure is non-fatal.
+    _notify_dashboard()
 
     # 8. OLED — verdict for human inspection
     _oled_safe(

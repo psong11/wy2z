@@ -29,7 +29,7 @@ The lab contains exactly three plants under a single grow light:
 2. **zinnia_b** — a second Zinnia elegans seedling, middle of the frame
 3. **tomato** — a Wyches Yellow heirloom indeterminate tomato (Solanum lycopersicum), rightmost. Currently a young seedling in the largest pot. Will eventually be a 6-8 ft vine.
 
-The owner will be away for ~5 weeks and an automated system will rely on your verdict to decide whether to dispense water. Be decisive but honest about uncertainty.
+An automated system will use your verdict to decide whether to dispense water on this run. Be decisive but honest about uncertainty.
 
 Pay attention to:
 - Leaf color and turgor (wilting, yellowing, browning, curling)
