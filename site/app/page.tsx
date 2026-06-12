@@ -18,8 +18,6 @@ export const revalidate = 1800; // 30 min fail-open fallback. The Pi POSTs
                                 // /api/revalidate after each insert, so
                                 // viewers see new data within seconds.
 
-const PHOTO_STRIP_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
-
 function lastWateredFor(plantId: PlantId, observations: Observation[]): string | null {
   // Three action_taken shapes coexist in the table:
   //   "watered"     — pump actually fired (since 2026-05-06). action_payload
@@ -43,7 +41,7 @@ function lastWateredFor(plantId: PlantId, observations: Observation[]): string |
 
 export default async function HomePage() {
   const [observations, totalCount, firstWateredAt, readings] = await Promise.all([
-    fetchRecentObservations(30),
+    fetchRecentObservations(120),
     fetchObservationCount(),
     fetchFirstWateredAt(),
     fetchAllReadings(),
@@ -58,19 +56,10 @@ export default async function HomePage() {
       })
     : "Awaiting first capture.";
 
-  // Photo strip stays windowed to the last 14 days — beyond that, it's no
-  // longer "recent." But the chart shows the full history (readings is
-  // already ordered oldest → newest from the query).
-  const photoStripCutoff = Date.now() - PHOTO_STRIP_WINDOW_MS;
-  const recentForStrip = observations.filter(
-    (o) => new Date(o.captured_at).getTime() >= photoStripCutoff,
-  );
-
-  const stripObservations = recentForStrip
-    .filter((o) => (o.notes ?? "").includes("morning") || (o.notes ?? "").includes("evening"))
-    .slice(0, 14);
-  const stripFallback =
-    stripObservations.length === 0 ? observations.slice(0, 14) : stripObservations;
+  // Photo strip: show every recent capture (newest first), no notes
+  // filter and no time cutoff. The horizontal scroll handles volume.
+  // Chart shows full history from the lean readings query.
+  const stripObservations = observations;
 
   const chartReadings = readings.map((r) => ({
     capturedAtMs: new Date(r.captured_at).getTime(),
@@ -139,7 +128,7 @@ export default async function HomePage() {
 
       <TempHumidityChart readings={chartReadings} />
 
-      <PhotoStrip observations={stripFallback} />
+      <PhotoStrip observations={stripObservations} />
 
       {latest && process.env.NEXT_PUBLIC_SUPABASE_URL && (
         <TimelapsePlayer

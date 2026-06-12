@@ -54,6 +54,9 @@ WATER_TIMEOUT_S = 10
 REVALIDATE_ENDPOINT = "https://wy2z.vercel.app/api/revalidate"
 REVALIDATE_TIMEOUT_S = 10
 
+TIMELAPSE_ENDPOINT = "https://wy2z.vercel.app/api/build-timelapse"
+TIMELAPSE_TIMEOUT_S = 90  # rebuild downloads every photo + runs ffmpeg
+
 LOG_PATH = Path("/tmp/wy2z-capture.log")
 
 log = logging.getLogger("wy2z.capture")
@@ -144,6 +147,30 @@ def _notify_dashboard() -> None:
             log.info("dashboard revalidate: %s", resp.read().decode("utf-8")[:200])
     except Exception as e:
         log.warning("dashboard revalidate failed: %s", e)
+
+
+def _rebuild_timelapse() -> None:
+    """Trigger a fresh timelapse.mp4 build so the new photo is in the
+    playback now, not after the daily Vercel Cron fires at 02:00 UTC.
+
+    Slower than the revalidate (the route downloads every photo + runs
+    ffmpeg), but still best-effort — failure is non-fatal because the
+    daily cron rebuilds anyway.
+    """
+    secret = os.environ.get("CRON_SECRET")
+    if not secret:
+        log.warning("CRON_SECRET not set, skipping timelapse rebuild")
+        return
+    try:
+        req = urllib.request.Request(
+            TIMELAPSE_ENDPOINT,
+            method="GET",
+            headers={"Authorization": f"Bearer {secret}"},
+        )
+        with urllib.request.urlopen(req, timeout=TIMELAPSE_TIMEOUT_S) as resp:
+            log.info("timelapse rebuild: %s", resp.read().decode("utf-8")[:300])
+    except Exception as e:
+        log.warning("timelapse rebuild failed: %s", e)
 
 
 def _short_verdict_summary(verdict: dict) -> str:
@@ -252,6 +279,10 @@ def run_capture(mode: str = "test") -> dict:
     # 7b. Tell the dashboard a fresh row exists so ISR invalidates now,
     #     not 30 minutes from now. Best-effort; failure is non-fatal.
     _notify_dashboard()
+
+    # 7c. Rebuild the timelapse MP4 so the new frame is in playback now,
+    #     not after the next daily Vercel Cron tick. Also best-effort.
+    _rebuild_timelapse()
 
     # 8. OLED — verdict for human inspection
     _oled_safe(
