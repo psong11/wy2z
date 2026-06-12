@@ -51,6 +51,29 @@ export async function fetchFirstWateredAt(): Promise<string | null> {
   return data?.[0]?.captured_at ?? null;
 }
 
+/** Lean read of every observation's temp/humidity over time. Only fetches
+ *  the columns the chart actually plots — keeps payload small enough to
+ *  pull the whole history (years of 4×/day captures fit in the limit). */
+export type Reading = {
+  captured_at: string;
+  air_temp_c: number | null;
+  air_humidity_pct: number | null;
+};
+
+export async function fetchAllReadings(): Promise<Reading[]> {
+  const { data, error } = await supabase
+    .from("observations")
+    .select("captured_at, air_temp_c, air_humidity_pct")
+    .order("captured_at", { ascending: true })
+    .limit(5000); // ~3 years at 4×/day; plenty of headroom
+
+  if (error) {
+    console.error("[wy2z] fetchAllReadings failed", error);
+    return [];
+  }
+  return (data ?? []) as Reading[];
+}
+
 /** Total row count — drives the status footer's "X observations" line. */
 export async function fetchObservationCount(): Promise<number> {
   const { count, error } = await supabase

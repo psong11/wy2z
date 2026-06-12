@@ -1,4 +1,4 @@
-import { fetchFirstWateredAt, fetchObservationCount, fetchRecentObservations, type Observation } from "@/lib/observations";
+import { fetchAllReadings, fetchFirstWateredAt, fetchObservationCount, fetchRecentObservations, type Observation } from "@/lib/observations";
 import { findPlant, PLANT_ORDER, type PlantId } from "@/lib/verdict";
 import { buildHeroOneLiner } from "@/lib/one-liner";
 import { HeroHeader } from "@/components/hero-header";
@@ -14,10 +14,11 @@ import { StatusFooter } from "@/components/status-footer";
 import { StaleBanner } from "@/components/stale-banner";
 import { SystemDownNotice } from "@/components/system-down-notice";
 
-export const revalidate = 1800; // 30 minutes — cron fires every 12h, so 30m
-                                // staleness is invisible to a viewer.
+export const revalidate = 1800; // 30 min fail-open fallback. The Pi POSTs
+                                // /api/revalidate after each insert, so
+                                // viewers see new data within seconds.
 
-const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
+const PHOTO_STRIP_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
 function lastWateredFor(plantId: PlantId, observations: Observation[]): string | null {
   // Three action_taken shapes coexist in the table:
@@ -41,10 +42,11 @@ function lastWateredFor(plantId: PlantId, observations: Observation[]): string |
 }
 
 export default async function HomePage() {
-  const [observations, totalCount, firstWateredAt] = await Promise.all([
+  const [observations, totalCount, firstWateredAt, readings] = await Promise.all([
     fetchRecentObservations(30),
     fetchObservationCount(),
     fetchFirstWateredAt(),
+    fetchAllReadings(),
   ]);
 
   const latest = observations[0] ?? null;
@@ -56,24 +58,25 @@ export default async function HomePage() {
       })
     : "Awaiting first capture.";
 
-  const cutoff = Date.now() - FOURTEEN_DAYS_MS;
-  const recent14 = observations.filter(
-    (o) => new Date(o.captured_at).getTime() >= cutoff,
+  // Photo strip stays windowed to the last 14 days — beyond that, it's no
+  // longer "recent." But the chart shows the full history (readings is
+  // already ordered oldest → newest from the query).
+  const photoStripCutoff = Date.now() - PHOTO_STRIP_WINDOW_MS;
+  const recentForStrip = observations.filter(
+    (o) => new Date(o.captured_at).getTime() >= photoStripCutoff,
   );
 
-  const stripObservations = recent14
+  const stripObservations = recentForStrip
     .filter((o) => (o.notes ?? "").includes("morning") || (o.notes ?? "").includes("evening"))
     .slice(0, 14);
   const stripFallback =
     stripObservations.length === 0 ? observations.slice(0, 14) : stripObservations;
 
-  const chartReadings = [...recent14]
-    .reverse() // oldest → newest for left-to-right time axis
-    .map((o) => ({
-      capturedAtMs: new Date(o.captured_at).getTime(),
-      airTempC: o.air_temp_c,
-      airHumidityPct: o.air_humidity_pct,
-    }));
+  const chartReadings = readings.map((r) => ({
+    capturedAtMs: new Date(r.captured_at).getTime(),
+    airTempC: r.air_temp_c,
+    airHumidityPct: r.air_humidity_pct,
+  }));
 
   return (
     <main className="min-h-screen">
