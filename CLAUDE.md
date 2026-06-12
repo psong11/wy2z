@@ -42,6 +42,7 @@ A 4-device plant life-support system for one heirloom indeterminate tomato (Wych
   - `plant_care.md` — biological needs (light, water, nutrition, pollination)
   - `ssh_jetson.md` — **read before any SSH command to the Jetson**
   - `what_id_change_next_time.md` — running list of "with hindsight..." notes
+  - `lessons_learned.md` — **read before touching infra/networking code.** Past incidents, root causes, and the systems-thinking takeaways from each.
 
 ## How Paul works
 

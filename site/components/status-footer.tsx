@@ -29,7 +29,7 @@ export function StatusFooter({ lastCapturedAt, totalObservations, firstWateredAt
     ],
     [
       "Cadence",
-      "07:30 · 10:30 · 13:30 · 16:30 · 19:30 CT — five times daily",
+      "07:30 · 11:30 · 15:30 · 19:30 CT — four times daily",
     ],
     [
       "Journal",
@@ -39,6 +39,16 @@ export function StatusFooter({ lastCapturedAt, totalObservations, firstWateredAt
         className="underline decoration-slate-600 underline-offset-4 hover:decoration-[var(--color-leaf)]"
       >
         the build journal
+      </Link>,
+    ],
+    [
+      "Lessons",
+      <Link
+        key="lessons"
+        href="/lessons"
+        className="underline decoration-slate-600 underline-offset-4 hover:decoration-[var(--color-leaf)]"
+      >
+        what wy2z has taught me
       </Link>,
     ],
     [
