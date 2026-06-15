@@ -82,8 +82,15 @@ def analyze_photo(
     temp: Optional[float] = None,
     humidity: Optional[float] = None,
     api_key: Optional[str] = None,
+    hint: Optional[str] = None,
 ) -> dict:
     """Run Claude vision on a photo and return the parsed verdict dict.
+
+    `hint` is an optional operator-supplied paragraph appended verbatim
+    to the user message — used for after-the-fact re-analysis when we
+    have context the original cron run didn't (e.g. "the system was
+    offline for two weeks; what looks like fresh growth may not be
+    the intended plants"). Cron callers leave it None.
 
     Raises:
         FileNotFoundError    if photo doesn't exist
@@ -108,6 +115,8 @@ def analyze_photo(
         if humidity is not None:
             readings.append(f"air humidity = {humidity:.0f}%")
         user_text += " Telemetry: " + ", ".join(readings) + "."
+    if hint:
+        user_text += " " + hint
 
     client = Anthropic(api_key=api_key)
     msg = client.messages.create(
