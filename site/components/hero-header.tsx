@@ -11,8 +11,8 @@ export function HeroHeader() {
         wy2z
       </h1>
       <p className="mt-5 font-serif text-xl leading-relaxed text-slate-400 sm:text-2xl">
-        A four-device plant lab keeping a Wyches Yellow tomato and two zinnias
-        alive while I&rsquo;m out of town.
+        A four-device plant lab built to keep a Wyches Yellow tomato and two
+        zinnias alive while I was out of town.
       </p>
     </section>
   );
