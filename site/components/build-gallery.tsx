@@ -18,6 +18,7 @@ const PHOTOS: GalleryPhoto[] = [
   { src: "/gallery/build-6403.jpg", width: 1600, height: 1200, date: "May 10", alt: "Build photo, May 10, 2026" },
   { src: "/gallery/build-6401.jpg", width: 1200, height: 1600, date: "May 10", alt: "Build photo, May 10, 2026" },
   { src: "/gallery/build-6389.jpg", width: 1200, height: 1600, date: "May 7",  alt: "Build photo, May 7, 2026" },
+  { src: "/gallery/build-watering-night.png", width: 1800, height: 1169, date: "May 6",  alt: "Terminal screenshot, May 6, 2026 — Claude's recap of the first end-to-end watering run" },
   { src: "/gallery/build-6377.jpg", width: 1600, height: 1200, date: "May 6",  alt: "Build photo, May 6, 2026 — first automated watering night" },
   { src: "/gallery/build-6373.jpg", width: 1600, height: 1200, date: "May 6",  alt: "Build photo, May 6, 2026" },
   { src: "/gallery/build-6372.jpg", width: 1600, height: 1200, date: "May 6",  alt: "Build photo, May 6, 2026" },
