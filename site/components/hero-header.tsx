@@ -3,7 +3,7 @@
 
 export function HeroHeader() {
   return (
-    <section className="mx-auto max-w-[68ch] px-6 pt-16 pb-8 sm:pt-24">
+    <section className="mx-auto max-w-[68ch] px-6 pt-16 pb-4 sm:pt-24">
       <p className="mb-6 font-mono text-xs uppercase tracking-[0.2em] text-slate-500">
         A Live Plant Lab · May 2026
       </p>

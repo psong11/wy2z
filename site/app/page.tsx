@@ -11,8 +11,7 @@ import { TempHumidityChart } from "@/components/temp-humidity-chart";
 import { HowItWorks } from "@/components/how-it-works";
 import { BuildGallery } from "@/components/build-gallery";
 import { StatusFooter } from "@/components/status-footer";
-import { StaleBanner } from "@/components/stale-banner";
-import { SystemDownNotice } from "@/components/system-down-notice";
+import { ProjectClosedNotice } from "@/components/project-closed-notice";
 
 export const revalidate = 1800; // 30 min fail-open fallback. The Pi POSTs
                                 // /api/revalidate after each insert, so
@@ -69,11 +68,9 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen">
-      <StaleBanner lastCapturedAt={latest?.captured_at ?? null} />
-
       <HeroHeader />
 
-      <SystemDownNotice lastCapturedAt={latest?.captured_at ?? null} />
+      <ProjectClosedNotice />
 
       {latest ? (
         <>
