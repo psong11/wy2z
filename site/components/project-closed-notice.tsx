@@ -8,7 +8,7 @@ export function ProjectClosedNotice() {
     <section className="mx-auto max-w-[68ch] px-6">
       <div className="rounded-sm border border-slate-700 bg-slate-900/40 px-5 py-5 sm:px-6 sm:py-6">
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400">
-          Archived · 2026-06-11
+          Archived · 2026-06-12
         </p>
         <h2 className="mt-2 font-serif text-xl text-slate-100">
           The lab has been decommissioned.

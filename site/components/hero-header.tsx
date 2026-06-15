@@ -5,7 +5,7 @@ export function HeroHeader() {
   return (
     <section className="mx-auto max-w-[68ch] px-6 pt-16 pb-4 sm:pt-24">
       <p className="mb-6 font-mono text-xs uppercase tracking-[0.2em] text-slate-500">
-        A Live Plant Lab · May 2026
+        A Plant Lab · May–June 2026
       </p>
       <h1 className="font-serif text-[3rem] font-medium leading-[1] tracking-tight text-slate-50 sm:text-[4rem]">
         wy2z
