@@ -1,7 +1,10 @@
 // Bench-side photos from the build, ordered newest-first. Static assets
 // live in site/public/gallery/. Dimensions are baked in so Next/Image
 // can reserve the right aspect ratio without a layout shift on slow
-// connections — most are landscape 4:3, two are portrait 3:4.
+// connections. Cards render at a uniform height; each image's width
+// is computed from its own aspect ratio (film-strip pattern), so the
+// gallery looks consistent across landscapes, portraits, and the wider
+// terminal screenshot.
 
 import Image from "next/image";
 
@@ -11,10 +14,6 @@ type GalleryPhoto = {
   height: number;
   date: string; // editorial caption, not the photo's EXIF
   alt: string;
-  // Opt-in for ultra-wide images (terminal screenshots, panoramas) that
-  // would render shorter than the 4:3 landscape cards at the default
-  // basis. Widens the card so its rendered height matches the rest.
-  wideCard?: boolean;
 };
 
 const PHOTOS: GalleryPhoto[] = [
@@ -22,7 +21,7 @@ const PHOTOS: GalleryPhoto[] = [
   { src: "/gallery/build-6403.jpg", width: 1600, height: 1200, date: "May 10", alt: "Build photo, May 10, 2026" },
   { src: "/gallery/build-6401.jpg", width: 1200, height: 1600, date: "May 10", alt: "Build photo, May 10, 2026" },
   { src: "/gallery/build-6389.jpg", width: 1200, height: 1600, date: "May 7",  alt: "Build photo, May 7, 2026" },
-  { src: "/gallery/build-watering-night.png", width: 1800, height: 1169, date: "May 6",  alt: "Terminal screenshot, May 6, 2026 — Claude's recap of the first end-to-end watering run", wideCard: true },
+  { src: "/gallery/build-watering-night.png", width: 1800, height: 1169, date: "May 6",  alt: "Terminal screenshot, May 6, 2026 — Claude's recap of the first end-to-end watering run" },
   { src: "/gallery/build-6377.jpg", width: 1600, height: 1200, date: "May 6",  alt: "Build photo, May 6, 2026 — first automated watering night" },
   { src: "/gallery/build-6373.jpg", width: 1600, height: 1200, date: "May 6",  alt: "Build photo, May 6, 2026" },
   { src: "/gallery/build-6372.jpg", width: 1600, height: 1200, date: "May 6",  alt: "Build photo, May 6, 2026" },
@@ -55,12 +54,7 @@ export function BuildGallery() {
           {PHOTOS.map((p) => (
             <li
               key={p.src}
-              className={
-                "shrink-0 " +
-                (p.wideCard
-                  ? "basis-[92%] sm:basis-[64%]"
-                  : "basis-[80%] sm:basis-[55%]")
-              }
+              className="shrink-0"
               style={{ scrollSnapAlign: "start" }}
             >
               <a href={p.src} target="_blank" rel="noopener noreferrer" className="block">
@@ -69,8 +63,8 @@ export function BuildGallery() {
                   alt={p.alt}
                   width={p.width}
                   height={p.height}
-                  sizes="(max-width: 640px) 80vw, 360px"
-                  className="h-auto w-full rounded-sm border border-slate-700 bg-slate-900"
+                  sizes="(max-width: 640px) 60vw, 420px"
+                  className="h-[260px] w-auto max-w-none rounded-sm border border-slate-700 bg-slate-900 sm:h-[320px]"
                 />
                 <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.15em] text-slate-500">
                   {p.date}
