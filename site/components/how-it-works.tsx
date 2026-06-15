@@ -16,7 +16,7 @@ const PHASES: Phase[] = [
   {
     step: "01",
     title: "Capture",
-    body: "Cron fires every three hours from 07:30 to 19:30. The Pi reads the air sensor, paints the OLED with the timestamp, and asks the Jetson for one sharp photo.",
+    body: "Cron fires every four hours from 07:30 to 19:30. The Pi reads the air sensor, paints the OLED with the timestamp, and asks the Jetson for one sharp photo.",
   },
   {
     step: "02",
@@ -316,7 +316,7 @@ export function HowItWorks() {
         </p>
         <SystemDiagram />
         <p className="mt-6 font-serif text-base leading-relaxed text-slate-300">
-          One Raspberry Pi orchestrates four moving parts on a 3-hour clock:
+          One Raspberry Pi orchestrates four moving parts on a 4-hour clock:
           a camera that&rsquo;s a separate computer, a sensor on a GPIO pin,
           a vision model in a datacenter somewhere, and a Wi-Fi microcontroller
           that pushes water on command. The full loop &mdash; cron to capture
@@ -344,7 +344,7 @@ export function HowItWorks() {
       </ol>
 
       <p className="mx-auto mt-4 max-w-[68ch] px-6 pb-2 font-mono text-[11px] uppercase tracking-[0.15em] text-slate-500">
-        Cron · 07:30 · 10:30 · 13:30 · 16:30 · 19:30 CT · daily until the owner returns
+        Cron · 07:30 · 11:30 · 15:30 · 19:30 CT · ran daily, May 3 → June 11, 2026
       </p>
     </section>
   );
