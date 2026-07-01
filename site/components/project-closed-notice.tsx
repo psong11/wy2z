@@ -15,8 +15,10 @@ export function ProjectClosedNotice() {
         </h2>
         <p className="mt-4 font-serif text-sm leading-relaxed text-slate-300">
           Five weeks unattended, three plants, and a stack of lessons.
-          Everything below is the dashboard frozen at its final state —
-          scroll on for the journal, photos, and what I learned.
+          Everything below is the dashboard frozen at its final state —{" "}
+          <strong className="font-semibold text-slate-100">
+            scroll on for the journal, photos, and what I learned.
+          </strong>
         </p>
       </div>
     </section>
