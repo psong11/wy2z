@@ -130,7 +130,11 @@ export default async function HomePage() {
       {latest && process.env.NEXT_PUBLIC_SUPABASE_URL && (
         <TimelapsePlayer
           videoUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/plant-photos/timelapse.mp4`}
-          posterUrl={latest.photo_url}
+          // Poster is a hand-picked mid-run frame (May 22 midday) where the
+          // plants have visibly filled in — reads better as a thumbnail than
+          // the latest capture, which was a bare seedling shot early on / a
+          // wind-down shot late. Pinned since the project run is closed.
+          posterUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/plant-photos/2026/05/22/wy2z_midday_2026-05-22_11-30-03.jpg`}
           frameCount={totalCount}
         />
       )}
