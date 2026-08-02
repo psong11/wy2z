@@ -14,10 +14,11 @@ export function ProjectClosedNotice() {
           The lab has been decommissioned.
         </h2>
         <p className="mt-4 font-serif text-sm leading-relaxed text-slate-300">
-          Five weeks unattended, three plants, and a stack of lessons.
-          Everything below is the dashboard frozen at its final state —{" "}
+          Five weeks unattended, three plants, and a stack of lessons. The
+          results are right below — the full timelapse and every capture —{" "}
           <strong className="font-semibold text-slate-100">
-            scroll on for the journal, photos, and what I learned.
+            then the dashboard frozen at its final state, the journal, and
+            what I learned.
           </strong>
         </p>
       </div>

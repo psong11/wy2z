@@ -71,6 +71,38 @@ export default async function HomePage() {
 
       <ProjectClosedNotice />
 
+      {/* Results first: the whole run compressed into a video and the full
+          capture gallery. The frozen dashboard view follows the divider. */}
+      <section className="mx-auto max-w-[68ch] px-6 pt-14">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">
+          The Results · {totalCount} captures over 40 days
+        </p>
+      </section>
+
+      <TimelapsePlayer
+        videoUrl="/plant-photos/timelapse.mp4"
+        // Poster is a hand-picked mid-run frame (May 22 midday) where the
+        // plants have visibly filled in — reads better as a thumbnail than
+        // the latest capture, which was a bare seedling shot early on / a
+        // wind-down shot late. Pinned since the project run is closed.
+        posterUrl="/plant-photos/2026/05/22/wy2z_midday_2026-05-22_11-30-03.jpg"
+        frameCount={totalCount}
+      />
+
+      <PhotoStrip observations={stripObservations} />
+
+      {/* The split: results above, the project's dashboard below. */}
+      <section className="mx-auto max-w-[68ch] px-6 pt-16">
+        <div className="border-t border-slate-700" />
+        <p className="mt-10 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">
+          The Project · A Live* Glimpse
+        </p>
+        <p className="mt-2 font-serif text-sm italic text-slate-500">
+          *live as of the final capture — June 12, 2026. Below is the
+          dashboard exactly as it ran.
+        </p>
+      </section>
+
       {latest ? (
         <>
           <HeroPhoto
@@ -123,20 +155,6 @@ export default async function HomePage() {
       )}
 
       <TempHumidityChart readings={chartReadings} />
-
-      <PhotoStrip observations={stripObservations} />
-
-      {latest && (
-        <TimelapsePlayer
-          videoUrl="/plant-photos/timelapse.mp4"
-          // Poster is a hand-picked mid-run frame (May 22 midday) where the
-          // plants have visibly filled in — reads better as a thumbnail than
-          // the latest capture, which was a bare seedling shot early on / a
-          // wind-down shot late. Pinned since the project run is closed.
-          posterUrl="/plant-photos/2026/05/22/wy2z_midday_2026-05-22_11-30-03.jpg"
-          frameCount={totalCount}
-        />
-      )}
 
       <HowItWorks />
 

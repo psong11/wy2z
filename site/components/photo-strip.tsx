@@ -17,10 +17,10 @@ export function PhotoStrip({ observations }: Props) {
   }
 
   return (
-    <section className="mt-12 border-t border-slate-700">
-      <div className="mx-auto max-w-[68ch] px-6 pt-10">
+    <section className="mt-12">
+      <div className="mx-auto max-w-[68ch] px-6">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-slate-400">
-          Recent Captures
+          Every Capture
         </p>
       </div>
       <div
