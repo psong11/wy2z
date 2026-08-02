@@ -23,11 +23,14 @@ export function PhotoStrip({ observations }: Props) {
           Every Capture
         </p>
       </div>
-      <div
-        className="mt-4 overflow-x-auto px-6 pb-2 [scrollbar-width:thin]"
-        style={{ scrollSnapType: "x mandatory" }}
-      >
-        <ul className="mx-auto flex max-w-[68ch] gap-4">
+      {/* The scroll viewport itself sits inside the 68ch column — the strip
+          scrolls within the same margins as the prose, never edge-to-edge. */}
+      <div className="mx-auto mt-4 max-w-[68ch] px-6">
+        <div
+          className="overflow-x-auto pb-2 [scrollbar-width:thin]"
+          style={{ scrollSnapType: "x mandatory" }}
+        >
+          <ul className="flex gap-4">
           {observations.map((obs) => {
             const mode = modeOf(obs);
             return (
@@ -61,7 +64,8 @@ export function PhotoStrip({ observations }: Props) {
               </li>
             );
           })}
-        </ul>
+          </ul>
+        </div>
       </div>
     </section>
   );
