@@ -13,9 +13,8 @@ import { BuildGallery } from "@/components/build-gallery";
 import { StatusFooter } from "@/components/status-footer";
 import { ProjectClosedNotice } from "@/components/project-closed-notice";
 
-export const revalidate = 1800; // 30 min fail-open fallback. The Pi POSTs
-                                // /api/revalidate after each insert, so
-                                // viewers see new data within seconds.
+// Fully static — the run is closed and every observation ships with the
+// build (content/observations.json). No database, no revalidation.
 
 function lastWateredFor(plantId: PlantId, observations: Observation[]): string | null {
   // Three action_taken shapes coexist in the table:
@@ -127,14 +126,14 @@ export default async function HomePage() {
 
       <PhotoStrip observations={stripObservations} />
 
-      {latest && process.env.NEXT_PUBLIC_SUPABASE_URL && (
+      {latest && (
         <TimelapsePlayer
-          videoUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/plant-photos/timelapse.mp4`}
+          videoUrl="/plant-photos/timelapse.mp4"
           // Poster is a hand-picked mid-run frame (May 22 midday) where the
           // plants have visibly filled in — reads better as a thumbnail than
           // the latest capture, which was a bare seedling shot early on / a
           // wind-down shot late. Pinned since the project run is closed.
-          posterUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/plant-photos/2026/05/22/wy2z_midday_2026-05-22_11-30-03.jpg`}
+          posterUrl="/plant-photos/2026/05/22/wy2z_midday_2026-05-22_11-30-03.jpg"
           frameCount={totalCount}
         />
       )}

@@ -7,7 +7,6 @@ import {
   fetchRecentObservations,
 } from "@/lib/observations";
 
-export const revalidate = 1800;
 
 export const metadata = {
   title: "wy2z — the journal",

@@ -6,7 +6,6 @@ import {
 } from "@/lib/observations";
 import { StatusFooter } from "@/components/status-footer";
 
-export const revalidate = 1800;
 
 export const metadata = {
   title: "wy2z — lessons",

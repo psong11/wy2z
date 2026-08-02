@@ -1,9 +1,9 @@
 "use client";
 
-// Click-to-play timelapse below the photo strip. Default state shows the
-// most recent capture as a static thumbnail with a ▶ overlay. On click,
-// swap in a <video> with the prebuilt MP4 from Supabase. The MP4 is
-// regenerated daily by /api/build-timelapse (Vercel Cron, 02:00 UTC).
+// Click-to-play timelapse below the photo strip. Default state shows a
+// pinned mid-run capture as a static thumbnail with a ▶ overlay. On click,
+// swap in a <video> with the final MP4 (public/plant-photos/timelapse.mp4,
+// last built the night the run closed).
 
 import { useState } from "react";
 
@@ -22,7 +22,7 @@ export function TimelapsePlayer({ videoUrl, posterUrl, frameCount }: Props) {
         Timelapse
       </p>
       <p className="mt-2 font-serif text-sm text-slate-500">
-        {frameCount} captures stitched at 10 fps. Rebuilt nightly.
+        {frameCount} captures stitched at 10 fps. The complete run.
       </p>
 
       <div className="mt-4 overflow-hidden rounded-sm border border-slate-700 bg-slate-900">
